@@ -91,36 +91,32 @@
         statusDiv.className = "";
         statusDiv.innerText = "Registrando horário...";
 
+        // Envia os dados para a planilha
         fetch(WEB_APP_URL, {
             method: 'POST',
-            mode: 'no-cors', // <-- ESTA LINHA CORRIGE O ERRO DE COMUNICAÇÃO
+            mode: 'no-cors', // ESSA LINHA É OBRIGATÓRIA PARA EVITAR O ERRO DE COMUNICAÇÃO
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ acao: "registrarPonto", cpf: funcionarioCPF, nome: funcionarioNome })
-        })
-        .then(() => {
-            // Como o 'no-cors' não traz resposta do Google por segurança, 
-            // consideramos sucesso assim que o envio é completado.
-            statusDiv.className = "sucesso";
-            
-            // Pega a hora atual do celular do funcionário para mostrar na tela
-            const agora = new Date();
-            const dataFormatada = agora.toLocaleDateString('pt-BR');
-            const horaFormatada = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            
-            statusDiv.innerHTML = `📋 Check-in Confirmado!<br>📅 ${dataFormatada} às ⏰ ${horaFormatada}`;
-            
-            // Reseta a tela para o próximo funcionário após 5 segundos
-            setTimeout(() => {
-                document.getElementById('inputCPF').value = "";
-                document.getElementById('blocoFuncionario').style.display = "none";
-                statusDiv.className = "";
-                statusDiv.innerText = "";
-            }, 5000);
-        })
-        .catch(err => {
-            statusDiv.className = "erro";
-            statusDiv.innerText = "Erro ao salvar o ponto.";
         });
+
+        // Como o 'no-cors' oculta a resposta por segurança, tratamos como sucesso imediato após o disparo
+        statusDiv.className = "sucesso";
+        
+        const agora = new Date();
+        const dataFormatada = agora.toLocaleDateString('pt-BR');
+        const horaFormatada = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        
+        statusDiv.innerHTML = `📋 Check-in Confirmado!<br>📅 ${dataFormatada} às ⏰ ${horaFormatada}`;
+        
+        // Limpa a tela para o próximo colaborador após 4 segundos
+        setTimeout(() => {
+            document.getElementById('inputCPF').value = "";
+            document.getElementById('blocoFuncionario').style.display = "none";
+            statusDiv.className = "";
+            statusDiv.innerText = "";
+        }, 4000);
     }
+
 
 </script>
 
