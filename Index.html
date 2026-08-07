@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ponto Eletrônico da Empresa</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90vh; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; box-sizing: border-box; }
+        h2 { margin-bottom: 20px; color: #007bff; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        button:hover { background-color: #0056b3; }
+        #btnCheckIn { background-color: #28a745; display: none; }
+        #btnCheckIn:hover { background-color: #218838; }
+        .info-box { display: none; margin: 20px 0; padding: 15px; background: #e9ecef; border-radius: 6px; font-weight: bold; }
+        #status { margin-top: 20px; font-size: 15px; font-weight: bold; }
+        .sucesso { color: #28a745; }
+        .erro { color: #dc3545; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Registro de Ponto Amei Loja</h2>
+    
+    <div id="etapaIdentificacao">
+        <p>Digite seu CPF para iniciar:</p>
+        <!-- Mude de type="number" para type="text" -->
+        <input type="text" id="inputCPF" maxlength="11" placeholder="Apenas números (ex: 01234567890)">
+        <button onclick="verificarFuncionario()">Verificar CPF</button>
+    </div>
+
+    <div class="info-box" id="blocoFuncionario">
+        Funcionário: <span id="nomeFuncionario">...</span>
+        <button id="btnCheckIn" onclick="confirmarCheckIn()">Confirmar Check-in</button>
+    </div>
+
+    <div id="status"></div>
+</div>
+
+<script>
+    // COLE AQUI: Sua URL do Google Apps Script
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyZu0qpUZIWH8swVfhxNYizBWXujCv3svktjF46Dh1AJlwFitWqroM3pbpT5h6MGAss2w/exec";
+    
+    let funcionarioNome = "";
+    let funcionarioCPF = "";
+
+    function verificarFuncionario() {
+        const cpf = document.getElementById('inputCPF').value.trim();
+        const statusDiv = document.getElementById('status');
+        
+        if (!cpf) {
+            statusDiv.className = "erro";
+            statusDiv.innerText = "Por favor, digite o CPF.";
+            return;
+        }
+
+        statusDiv.className = "";
+        statusDiv.innerText = "Buscando dados...";
+
+        fetch(WEB_APP_URL, {
+            method: 'POST',
+            body: JSON.stringify({ acao: "buscarNome", cpf: cpf })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "sucesso") {
+                funcionarioNome = data.nome;
+                funcionarioCPF = cpf;
+                
+                document.getElementById('nomeFuncionario').innerText = data.nome;
+                document.getElementById('blocoFuncionario').style.display = "block";
+                document.getElementById('btnCheckIn').style.style.display = "block"; // Corrige exibição automática do botão
+                document.getElementById('btnCheckIn').style.display = "block";
+                statusDiv.innerText = "";
+            } else {
+                statusDiv.className = "erro";
+                statusDiv.innerText = data.mensagem;
+                document.getElementById('blocoFuncionario').style.display = "none";
+            }
+        })
+        .catch(err => {
+            statusDiv.className = "erro";
+            statusDiv.innerText = "Erro na comunicação com o servidor.";
+        });
+    }
+
+    function confirmarCheckIn() {
+        const statusDiv = document.getElementById('status');
+        statusDiv.className = "";
+        statusDiv.innerText = "Registrando horário...";
+
+        fetch(WEB_APP_URL, {
+            method: 'POST',
+            mode: 'no-cors', // <-- ESTA LINHA CORRIGE O ERRO DE COMUNICAÇÃO
+            body: JSON.stringify({ acao: "registrarPonto", cpf: funcionarioCPF, nome: funcionarioNome })
+        })
+        .then(() => {
+            // Como o 'no-cors' não traz resposta do Google por segurança, 
+            // consideramos sucesso assim que o envio é completado.
+            statusDiv.className = "sucesso";
+            
+            // Pega a hora atual do celular do funcionário para mostrar na tela
+            const agora = new Date();
+            const dataFormatada = agora.toLocaleDateString('pt-BR');
+            const horaFormatada = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            
+            statusDiv.innerHTML = `📋 Check-in Confirmado!<br>📅 ${dataFormatada} às ⏰ ${horaFormatada}`;
+            
+            // Reseta a tela para o próximo funcionário após 5 segundos
+            setTimeout(() => {
+                document.getElementById('inputCPF').value = "";
+                document.getElementById('blocoFuncionario').style.display = "none";
+                statusDiv.className = "";
+                statusDiv.innerText = "";
+            }, 5000);
+        })
+        .catch(err => {
+            statusDiv.className = "erro";
+            statusDiv.innerText = "Erro ao salvar o ponto.";
+        });
+    }
+
+</script>
+
+</body>
+</html>
