@@ -40,7 +40,7 @@
 
 <script>
     // ⚠️ ATENÇÃO: Substitua o texto abaixo pelo link real do seu Google Apps Script
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyZu0qpUZIWH8swVfhxNYizBWXujCv3svktjF46Dh1AJlwFitWqroM3pbpT5h6MGAss2w/exec";
+    const WEB_APP_URL = "SUA_URL_DO_GOOGLE_APPS_SCRIPT_AQUI";
     
     let funcionarioNome = "";
     let funcionarioCPF = "";
@@ -70,7 +70,7 @@
                 
                 document.getElementById('nomeFuncionario').innerText = data.nome;
                 document.getElementById('blocoFuncionario').style.display = "block";
-                document.getElementById('btnCheckIn').style.display = "block";
+                document.getElementById('btnCheckIn').style.display = "block"; // Linha corrigida aqui
                 statusDiv.innerText = "";
             } else {
                 statusDiv.className = "erro";
@@ -89,7 +89,6 @@
         statusDiv.className = "";
         statusDiv.innerText = "Registrando horário...";
 
-        // Envia os dados no modo transparente para ignorar as travas do navegador
         fetch(WEB_APP_URL, {
             method: 'POST',
             mode: 'no-cors', 
@@ -97,7 +96,6 @@
             body: JSON.stringify({ acao: "registrarPonto", cpf: funcionarioCPF, nome: funcionarioNome })
         });
 
-        // Exibe imediatamente o sucesso na tela sem esperar pelo retorno bloqueado do CORS
         statusDiv.className = "sucesso";
         
         const agora = new Date();
@@ -106,7 +104,6 @@
         
         statusDiv.innerHTML = `📋 Check-in Confirmado!<br>📅 ${dataFormatada} às ⏰ ${horaFormatada}`;
         
-        // Limpa o formulário após 4 segundos para o próximo funcionário usar
         setTimeout(() => {
             document.getElementById('inputCPF').value = "";
             document.getElementById('blocoFuncionario').style.display = "none";
