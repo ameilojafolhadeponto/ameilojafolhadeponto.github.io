@@ -10,9 +10,17 @@
         h2 { margin-bottom: 20px; color: #007bff; }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
         button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        button:hover { background-color: #0056b3; }
+        button:hover:not(:disabled) { background-color: #0056b3; }
+        
+        /* Estilo para quando qualquer botão estiver desativado (cinza e sem clique) */
+        button:disabled { 
+            background-color: #6c757d !important; 
+            cursor: not-allowed; 
+            opacity: 0.7; 
+        }
+
         #btnCheckIn { background-color: #28a745; display: none; }
-        #btnCheckIn:hover { background-color: #218838; }
+        #btnCheckIn:hover:not(:disabled) { background-color: #218838; }
         .info-box { display: none; margin: 20px 0; padding: 15px; background: #e9ecef; border-radius: 6px; font-weight: bold; }
         #status { margin-top: 20px; font-size: 15px; font-weight: bold; }
         .sucesso { color: #28a745; }
@@ -27,7 +35,7 @@
     <div id="etapaIdentificacao">
         <p>Digite seu CPF para iniciar:</p>
         <input type="text" id="inputCPF" maxlength="11" placeholder="Apenas números (ex: 01234567890)">
-        <button onclick="verificarFuncionario()">Verificar CPF</button>
+        <button id="btnVerificar" onclick="verificarFuncionario()">Verificar CPF</button>
     </div>
 
     <div class="info-box" id="blocoFuncionario">
@@ -48,6 +56,8 @@
     function verificarFuncionario() {
         const cpf = document.getElementById('inputCPF').value.trim();
         const statusDiv = document.getElementById('status');
+        const btnVerificar = document.getElementById('btnVerificar');
+        const btnCheckIn = document.getElementById('btnCheckIn');
         
         if (!cpf) {
             statusDiv.className = "erro";
@@ -55,6 +65,9 @@
             return;
         }
 
+        // Trava o botão de verificar enquanto busca
+        btnVerificar.disabled = true;
+        btnVerificar.innerText = "Buscando...";
         statusDiv.className = "";
         statusDiv.innerText = "Buscando dados...";
 
@@ -70,7 +83,12 @@
                 
                 document.getElementById('nomeFuncionario').innerText = data.nome;
                 document.getElementById('blocoFuncionario').style.display = "block";
-                document.getElementById('btnCheckIn').style.display = "block"; // Linha corrigida aqui
+                
+                // Garante que o botão de Check-in esteja ativo e visível para o novo usuário
+                btnCheckIn.disabled = false;
+                btnCheckIn.innerText = "Confirmar Check-in";
+                btnCheckIn.style.display = "block";
+                
                 statusDiv.innerText = "";
             } else {
                 statusDiv.className = "erro";
@@ -81,10 +99,24 @@
         .catch(err => {
             statusDiv.className = "erro";
             statusDiv.innerText = "Erro na comunicação com o servidor.";
+        })
+        .finally(() => {
+            // Reativa o botão de verificar após a busca terminar
+            btnVerificar.disabled = false;
+            btnVerificar.innerText = "Verificar CPF";
         });
     }
 
     function confirmarCheckIn() {
+        const btnCheckIn = document.getElementById('btnCheckIn');
+        
+        // Se já estiver desativado, interrompe a execução por segurança
+        if (btnCheckIn.disabled) return;
+
+        // Trava o botão imediatamente no primeiro clique
+        btnCheckIn.disabled = true;
+        btnCheckIn.innerText = "Registrando...";
+
         const statusDiv = document.getElementById('status');
         statusDiv.className = "";
         statusDiv.innerText = "Registrando horário...";
@@ -102,6 +134,7 @@
         const dataFormatada = agora.toLocaleDateString('pt-BR');
         const horaFormatada = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         
+        btnCheckIn.innerText = "Check-in Realizado ✓";
         statusDiv.innerHTML = `📋 Check-in Confirmado!<br>📅 ${dataFormatada} às ⏰ ${horaFormatada}`;
         
         setTimeout(() => {
@@ -109,6 +142,10 @@
             document.getElementById('blocoFuncionario').style.display = "none";
             statusDiv.className = "";
             statusDiv.innerText = "";
+            
+            // Prepara o botão novamente para o próximo colaborador
+            btnCheckIn.disabled = false;
+            btnCheckIn.innerText = "Confirmar Check-in";
         }, 4000);
     }
 </script>
